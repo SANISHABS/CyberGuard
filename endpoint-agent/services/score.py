@@ -1,25 +1,26 @@
-def calculate_score(results):
+def calculate_security_score(firewall_enabled,
+                             defender_enabled,
+                             updates_ok):
 
-    score = 100
+    score = 0
 
-    if not results["firewall"]["enabled"]:
-        score -= 25
+    # Firewall = 40 points
+    if firewall_enabled:
+        score += 40
 
-    if not results["defender"]["enabled"]:
-        score -= 20
+    # Defender = 40 points
+    if defender_enabled:
+        score += 40
 
-    if not results["updates"]["updated"]:
-        score -= 15
+    # Windows Updates = 20 points
+    if updates_ok:
+        score += 20
 
-    if len(results["ports"]["open_ports"]) > 5:
-        score -= 10
-
-    if score >= 90:
+    # Risk level
+    if score >= 80:
         risk = "Low"
-
-    elif score >= 70:
+    elif score >= 50:
         risk = "Medium"
-
     else:
         risk = "High"
 
