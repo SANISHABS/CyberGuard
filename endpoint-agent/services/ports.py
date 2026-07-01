@@ -1,5 +1,6 @@
 import socket
 
+# Common ports and associated services
 COMMON_PORTS = {
     21: "FTP",
     22: "SSH",
@@ -18,36 +19,66 @@ COMMON_PORTS = {
     8080: "HTTP Alternate"
 }
 
+
 def scan_ports(host="127.0.0.1"):
-    results = []
+    port_results = []
 
-    for port, service in COMMON_PORTS.items():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.5)
+    try:
+        for port, service in COMMON_PORTS.items():
 
-        result = sock.connect_ex((host, port))
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(0.5)
 
-        if result == 0:
+            try:
+                result = sock.connect_ex((host, port))
 
-            risk = "Low"
-            recommendation = "No action required."
+                if result == 0:
 
-            if port == 445:
-                risk = "High"
-                recommendation = "Disable SMB if not required."
+                    risk = "Low"
+                    recommendation = "No action required."
 
-            elif port == 3389:
-                risk = "Medium"
-                recommendation = "Disable Remote Desktop if not required."
+                    # High-risk ports
+                    if port == 445:
+                        risk = "High"
+                        recommendation = "Disable SMB if not required."
 
-            results.append({
-                "port": port,
-                "service": service,
-                "status": "Open",
-                "risk": risk,
-                "recommendation": recommendation
-            })
+                    elif port == 3389:
+                        risk = "Medium"
+                        recommendation = (
+                            "Disable Remote Desktop if not required."
+                        )
 
-        sock.close()
+                    elif port in [21, 23]:
+                        risk = "Medium"
+                        recommendation = (
+                            "Avoid insecure protocols if possible."
+                        )
 
-    return results
+                    port_results.append({
+                        "port": port,
+                        "service": service,
+                        "status": "Open",
+                        "risk": risk,
+                        "recommendation": recommendation
+                    })
+
+            except Exception:
+                continue
+
+            finally:
+                sock.close()
+
+        return {
+            "host": host,
+            "total_open_ports": len(port_results),
+            "ports": port_results
+        }
+
+    except Exception as e:
+
+        return {
+            "host": host,
+            "total_open_ports": 0,
+            "ports": [],
+            "error": str(e)
+        }
